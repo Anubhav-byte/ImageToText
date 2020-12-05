@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.speech.tts.TextToSpeech;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -23,12 +24,14 @@ import com.google.firebase.ml.vision.text.FirebaseVisionText;
 import com.google.firebase.ml.vision.text.FirebaseVisionTextDetector;
 
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     static final int REQUEST_IMAGE_CAPTURE = 1;
     private ImageView imageview;
     private TextView textView;
     private Button capture, detect;
+    private TextToSpeech textToSpeech;
     Bitmap imagebitmap;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,8 +75,10 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Bundle extras = data.getExtras();
             Bitmap imageBitmap = (Bitmap) extras.get("data");
+            imageview.setVisibility(View.VISIBLE);
             imageview.setImageBitmap(imageBitmap);
             imagebitmap=imageBitmap;
+            setLang();
         }
     }
 
@@ -101,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(MainActivity.this, "No Text Found in Image", Toast.LENGTH_SHORT).show();
         }
         else{
+            textView.setVisibility(View.VISIBLE);
             for(FirebaseVisionText.Block block :firebaseVisionText.getBlocks()){
                 String text=block.getText();
                 textView.setText(text);
@@ -109,8 +115,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void play(View view) {
+        String data= textView.getText().toString();
+        textToSpeech.speak(data,TextToSpeech.QUEUE_FLUSH,null);
+    }
 
-        TSpeak ts = new TSpeak(MainActivity.this);
-        ts.convert(textView.getText().toString());
+    public void setLang(){
+        textToSpeech= new TextToSpeech(MainActivity.this, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int i) {
+                if(i==TextToSpeech.SUCCESS){
+                    int ttslang=textToSpeech.setLanguage(Locale.ENGLISH);
+
+                }
+                else{
+                    Toast.makeText(MainActivity.this, "Initialization failed", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 }
